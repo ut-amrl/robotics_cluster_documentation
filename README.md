@@ -36,7 +36,8 @@ Texas Robotics allocations also have access to the rest of Stampede3. See the [f
 | Component | Status | Notes |
 |-----------|--------|-------|
 | IsaacLab v2.1.0 | Working | Requires PyTorch nightly for Blackwell; see [setup guide](tacc_stampede_isaaclab/) |
-| PyTorch (nightly, cu128) | Working | Default PyTorch 2.5.1 does **not** support Blackwell |
+| PyTorch (nightly, cu128) | Working | Default PyTorch 2.5.1 does **not** support Blackwell; see [PyTorch GPU guide](tacc_stampede_pytorch/) |
+| vLLM 0.15 | Working | LLM inference server with TP/DP support; see [vLLM guide](tacc_stampede_vllm/) |
 | Isaac Sim 4.5.0 | Working | pip install |
 | CUDA peer-to-peer | Warning (harmless) | `peer access is already enabled` on multi-GPU nodes; training completes fine |
 
@@ -164,4 +165,6 @@ Install environments into `$WORK` so they persist and are available across login
 
 | Guide | Description |
 |-------|-------------|
+| [PyTorch GPU Environment](tacc_stampede_pytorch/) | Set up micromamba + PyTorch with GPU support on Blackwell nodes. Includes an interactive verification walkthrough and an [sbatch training script](tacc_stampede_pytorch/train_cifar10.slurm). |
+| [vLLM LLM Serving](tacc_stampede_vllm/) | Install vLLM and serve LLMs with single-GPU, data-parallel (8 GPU), and tensor-parallel configurations. Includes sbatch scripts for [14B single-GPU](tacc_stampede_vllm/serve_single_gpu.slurm), [14B data-parallel](tacc_stampede_vllm/serve_data_parallel.slurm), and [32B tensor-parallel](tacc_stampede_vllm/serve_tensor_parallel.slurm). |
 | [IsaacLab on Stampede3](tacc_stampede_isaaclab/) | Install IsaacLab v2.1.0 + Isaac Sim 4.5.0 on Blackwell GPU nodes. Includes an [sbatch script](tacc_stampede_isaaclab/install_isaaclab.slurm) for fully automated installation. |
