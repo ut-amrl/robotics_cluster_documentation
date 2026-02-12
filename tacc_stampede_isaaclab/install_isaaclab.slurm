@@ -6,7 +6,7 @@
 #SBATCH -N 1                       # 1 node
 #SBATCH -n 1                       # 1 task
 #SBATCH -t 01:00:00                # Wall time (1 hour, generous for install)
-#SBATCH -A iri26004                # Allocation
+#SBATCH -A IRI26004		   # Allocation
 
 set -e
 
@@ -34,8 +34,8 @@ eval "$("$MAMBA_EXE" shell hook --shell bash --root-prefix "$MAMBA_ROOT_PREFIX" 
 # --------------------------------------------------------------------------
 echo ""
 echo "=== Step 1: Creating micromamba environment ==="
-micromamba create -n isaaclab_install python=3.10 -c conda-forge -y
-micromamba activate isaaclab_install
+micromamba create -n isaaclab python=3.10 -c conda-forge -y
+micromamba activate isaaclab
 echo "Python: $(python --version)"
 
 # --------------------------------------------------------------------------
@@ -59,8 +59,7 @@ pip install 'isaacsim[all,extscache]==4.5.0' --extra-index-url https://pypi.nvid
 # --------------------------------------------------------------------------
 echo ""
 echo "=== Step 4: Cloning IsaacLab v2.1.0 ==="
-INSTALL_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$INSTALL_DIR"
+cd $WORK
 
 if [ -d "IsaacLab" ]; then
     echo "IsaacLab directory already exists, updating..."
