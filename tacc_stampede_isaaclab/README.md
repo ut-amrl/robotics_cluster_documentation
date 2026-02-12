@@ -2,10 +2,20 @@
 
 Instructions for installing [IsaacLab v2.1.0](https://isaac-sim.github.io/IsaacLab/release/2.1.0/) with Isaac Sim 4.5.0 in a micromamba environment on Stampede3 GPU nodes.
 
+**Automated install:** You can skip the manual steps entirely by submitting the provided sbatch script:
+
+```bash
+sbatch install_isaaclab.slurm
+```
+
+See [`install_isaaclab.slurm`](install_isaaclab.slurm) for the full script. It creates the environment, installs all dependencies, patches version pins, and runs a verification training loop — all in a single batch job.
+
+For more context on Isaac Lab's installation options, see the [official IsaacLab installation documentation](https://isaac-sim.github.io/IsaacLab/release/2.1.0/source/setup/installation/index.html).
+
 ## System Details
 
 - **OS:** Rocky Linux 9.7 (Blue Onyx), Kernel 5.14.0
-- **CPU:** AMD EPYC 9555 64-Core (128 cores)
+- **CPU:** 2x AMD EPYC 9555 64-Core (128 cores total)
 - **RAM:** ~1.5 TB
 - **GPUs:** 8x NVIDIA RTX PRO 6000 Blackwell Server Edition
 - **GPU Driver:** 590.48.01
@@ -161,37 +171,18 @@ The first `import isaacsim` triggers an interactive EULA prompt that hangs in sc
 
 You may see: `Cuda failure: 'peer access is already enabled'`. This is a harmless warning on 8-GPU nodes. Training completes successfully despite it.
 
-## Complete Installation Script
+## Automated Installation via sbatch
 
-Copy and run for a fully automated install:
+Instead of running the steps above manually, submit the provided SLURM batch script which performs the entire installation end-to-end on a GPU node:
 
 ```bash
-#!/usr/bin/env bash
-set -e
-
-micromamba activate isaaclab_install
-
-pip install --upgrade pip
-pip install --upgrade --pre torch --index-url https://download.pytorch.org/whl/nightly/cu128
-pip install 'isaacsim[all,extscache]==4.5.0' --extra-index-url https://pypi.nvidia.com
-
-git clone https://github.com/isaac-sim/IsaacLab.git
-cd IsaacLab
-git checkout v2.1.0
-
-sed -i 's/"torch==2.5.1"/"torch>=2.5.1"/g' source/isaaclab/setup.py
-sed -i 's/"torch==2.5.1"/"torch>=2.5.1"/g' source/isaaclab_rl/setup.py
-sed -i 's/"torch==2.5.1"/"torch>=2.5.1"/g' source/isaaclab_tasks/setup.py
-
-export TERM=xterm
-export CMAKE_POLICY_VERSION_MINIMUM=3.5
-./isaaclab.sh --install
-
-pip install --upgrade --pre torch --index-url https://download.pytorch.org/whl/nightly/cu128
-pip install --upgrade --pre torchvision --index-url https://download.pytorch.org/whl/nightly/cu128
-
-echo "Yes" | python -c "import isaacsim"
-
-python scripts/reinforcement_learning/rsl_rl/train.py \
-    --task=Isaac-Ant-v0 --headless --max_iterations 10
+sbatch install_isaaclab.slurm
 ```
+
+The script ([`install_isaaclab.slurm`](install_isaaclab.slurm)) performs all 9 steps above, including environment creation, patching, and a verification training run. Monitor progress with:
+
+```bash
+tail -f isaaclab_install.<job_id>.out
+```
+
+For the official upstream installation instructions and alternative methods, refer to the [IsaacLab Installation Guide](https://isaac-sim.github.io/IsaacLab/release/2.1.0/source/setup/installation/index.html).
