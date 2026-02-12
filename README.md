@@ -39,7 +39,6 @@ Texas Robotics allocations also have access to the rest of Stampede3. See the [f
 | PyTorch (nightly, cu128) | Working | Default PyTorch 2.5.1 does **not** support Blackwell; see [PyTorch GPU guide](tacc_stampede_pytorch/) |
 | vLLM 0.15 | Working | LLM inference server with TP/DP support; see [vLLM guide](tacc_stampede_vllm/) |
 | Isaac Sim 4.5.0 | Working | pip install |
-| CUDA peer-to-peer | Warning (harmless) | `peer access is already enabled` on multi-GPU nodes; training completes fine |
 
 ## Connecting
 
