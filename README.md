@@ -121,9 +121,20 @@ See the [Stampede3 file systems documentation](https://docs.tacc.utexas.edu/hpc/
 Check your usage:
 
 ```bash
-quota -s                              # $HOME usage
-lfs quota -u $USER $WORK              # $WORK usage
-du -sh $SCRATCH                       # $SCRATCH usage (can be slow)
+taccinfo
+```
+Example output: 
+
+```bash
+--------------------- Project balances for user joydeepb ----------------------
+| Name           Avail SUs     Expires |                                      |
+| IRI26004           99508  2027-02-04 |                                      |
+------------------------ Disk quotas for user joydeepb ------------------------
+| Disk         Usage (GB)     Limit    %Used   File Usage       Limit   %Used |
+| /scratch           24.0       0.0     0.00         8383           0    0.00 |
+| /home1              0.2      14.0     1.75          398      500000    0.08 |
+| /work             241.1    1024.0    23.54       849645     3000000   28.32 |
+-------------------------------------------------------------------------------
 ```
 
 Handy navigation aliases (built-in on TACC systems):
