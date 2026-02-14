@@ -35,7 +35,8 @@ Texas Robotics allocations also have access to the rest of Stampede3. See the [f
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| IsaacLab v2.1.0 | Working | Requires PyTorch nightly for Blackwell; see [setup guide](tacc_stampede_isaaclab/) |
+| Isaac Lab NGC container v2.3.2 | Working (Apptainer, recommended) | Best path for latest Isaac Lab on Stampede3: run `nvcr.io/nvidia/isaac-lab:2.3.2` via Apptainer; see [container guide](tacc_stampede_isaaclab_container/) |
+| IsaacLab v2.1.0 | Working (legacy path) | Older pip/micromamba install path; use container above for latest Isaac Lab version. See [setup guide](tacc_stampede_isaaclab/) |
 | Isaac Sim 5.1.x (source build) | Working (with caveats) | Build from source on GLIBC 2.34 nodes; see [Isaac Sim source-build guide](tacc_stampede_isaacsim_source_build/) |
 | PyTorch (nightly, cu128) | Working | Default PyTorch 2.5.1 does **not** support Blackwell; see [PyTorch GPU guide](tacc_stampede_pytorch/) |
 | vLLM 0.15 | Working | LLM inference server with TP/DP support; see [vLLM guide](tacc_stampede_vllm/) |
@@ -97,6 +98,48 @@ scancel <job_id>                      # cancel a job
 ```
 
 See the [TACC job submission docs](https://docs.tacc.utexas.edu/hpc/stampede3/#running) for full details.
+
+## Listing Users in an Allocation
+
+On Stampede3, `sshare` and `sacctmgr` may only show the subset visible from your user context. A reliable way to list associated users for an allocation is:
+
+```bash
+scontrol -o show assoc_mgr account=<allocation_name> \
+| awk '{for(i=1;i<=NF;i++){if($i ~ /^Account=<allocation_name>$/){acct=1} if(acct && $i ~ /^UserName=/){u=$i; sub(/^UserName=/,"",u); sub(/\(.*/,"",u); if(u!="") print u; acct=0}}}' \
+| sort -u
+```
+
+Reusable form for any allocation:
+
+```bash
+ALLOC=<allocation_name>
+scontrol -o show assoc_mgr account="$ALLOC" \
+| awk -v a="$ALLOC" '{for(i=1;i<=NF;i++){if($i=="Account="a){acct=1} if(acct && $i ~ /^UserName=/){u=$i; sub(/^UserName=/,"",u); sub(/\(.*/,"",u); if(u!="") print u; acct=0}}}' \
+| sort -u
+```
+
+Helper script in this repo (defaults to `idev_project` in `~/.idevrc`, override with `-A`):
+
+```bash
+./scripts/list_alloc_users.sh
+./scripts/list_alloc_users.sh -A <allocation_name>
+```
+
+To show per-user usage for an allocation (sorted highest first):
+
+```bash
+ALLOC=<allocation_name>
+scontrol -o show assoc_mgr account="$ALLOC" \
+| awk -v a="$ALLOC" 'match($0,/Account=([^ ]+)/,am) && am[1]==a && match($0,/UserName=([^ (]+)/,um) && match($0,/UsageRaw\/Norm\/Efctv=([^\/]+)/,rm) {print um[1] "|" rm[1]}' \
+| sort -t"|" -k2,2nr
+```
+
+Usage helper script in this repo:
+
+```bash
+./scripts/list_alloc_usage.sh
+./scripts/list_alloc_usage.sh -A <allocation_name>
+```
 
 ## Module System
 
@@ -178,5 +221,6 @@ Install environments into `$WORK` so they persist and are available across login
 |-------|-------------|
 | [PyTorch GPU Environment](tacc_stampede_pytorch/) | Set up micromamba + PyTorch with GPU support on Blackwell nodes. Includes an interactive verification walkthrough and an [sbatch training script](tacc_stampede_pytorch/train_cifar10.slurm). |
 | [vLLM LLM Serving](tacc_stampede_vllm/) | Install vLLM and serve LLMs with single-GPU, data-parallel (8 GPU), and tensor-parallel configurations. Includes sbatch scripts for [14B single-GPU](tacc_stampede_vllm/serve_single_gpu.slurm), [14B data-parallel](tacc_stampede_vllm/serve_data_parallel.slurm), and [32B tensor-parallel](tacc_stampede_vllm/serve_tensor_parallel.slurm). |
-| [IsaacLab on Stampede3](tacc_stampede_isaaclab/) | Install IsaacLab v2.1.0 + Isaac Sim 4.5.0 on Blackwell GPU nodes. Includes an [sbatch script](tacc_stampede_isaaclab/install_isaaclab.slurm) for fully automated installation. |
+| [Isaac Lab NGC Container](tacc_stampede_isaaclab_container/) | **Recommended for latest Isaac Lab.** Run NVIDIA's `nvcr.io/nvidia/isaac-lab:2.3.2` image on Stampede3 using Apptainer. Includes interactive launch helpers and an [sbatch video-training example](tacc_stampede_isaaclab_container/run_isaaclab_container_train_video.slurm). |
+| [IsaacLab on Stampede3](tacc_stampede_isaaclab/) | Legacy install guide for IsaacLab v2.1.0 + Isaac Sim 4.5.0 via pip/micromamba. Includes an [sbatch script](tacc_stampede_isaaclab/install_isaaclab.slurm). |
 | [Isaac Sim Source Build (GLIBC 2.34)](tacc_stampede_isaacsim_source_build/) | Build Isaac Sim from source on Blackwell nodes where pip wheels are incompatible. Includes a full automation script ([build_isaacsim_stampede.sh](tacc_stampede_isaacsim_source_build/build_isaacsim_stampede.sh)) and a warehouse SDG smoke test. |
