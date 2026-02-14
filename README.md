@@ -123,7 +123,7 @@ See the [Stampede3 file systems documentation](https://docs.tacc.utexas.edu/hpc/
 Check your usage:
 
 ```bash
-taccinfo
+/usr/local/etc/taccinfo
 ```
 Example output: 
 
