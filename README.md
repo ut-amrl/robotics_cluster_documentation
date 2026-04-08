@@ -182,3 +182,7 @@ Install environments into `$WORK` so they persist and are available across login
 | [Isaac Lab NGC Container](tacc_stampede_isaaclab_container/) | **Recommended for latest Isaac Lab.** Run NVIDIA's `nvcr.io/nvidia/isaac-lab:2.3.2` image on Stampede3 using Apptainer. Includes interactive launch helpers and an [sbatch video-training example](tacc_stampede_isaaclab_container/run_isaaclab_container_train_video.slurm). |
 | [IsaacLab on Stampede3](tacc_stampede_isaaclab/) | Legacy install guide for IsaacLab v2.1.0 + Isaac Sim 4.5.0 via pip/micromamba. Includes an [sbatch script](tacc_stampede_isaaclab/install_isaaclab.slurm). |
 | [Isaac Sim Source Build (GLIBC 2.34)](tacc_stampede_isaacsim_source_build/) | Build Isaac Sim from source on Blackwell nodes where pip wheels are incompatible. Includes a full automation script ([build_isaacsim_stampede.sh](tacc_stampede_isaacsim_source_build/build_isaacsim_stampede.sh)) and a warehouse SDG smoke test. |
+
+## Helpful Tricks
+
+[Slack notifications](slack_notifications/README.md) are handy for getting notified when jobs are allocated, or for providing helpful notifications on job progress.
