@@ -74,7 +74,47 @@ cd /results
   --max_iterations 10
 ```
 
-## 5) Locate outputs
+## 5) Warehouse random-camera SDG capture (RGB + Depth + Semantic)
+
+Script in this folder:
+
+```bash
+warehouse_random_camera_capture.py
+```
+
+From an interactive container shell, run:
+
+```bash
+export TERM=xterm
+export OMNI_KIT_ACCEPT_EULA=YES
+export ACCEPT_EULA=Y
+cd /results
+
+/isaac-sim/python.sh /results/warehouse_random_camera_capture.py \
+  --headless \
+  --num-samples 100 \
+  --output-dir /results/warehouse_random_capture
+```
+
+Alternative launch using Isaac Lab helper:
+
+```bash
+/workspace/isaaclab/isaaclab.sh -p /results/warehouse_random_camera_capture.py \
+  --headless \
+  --num-samples 100 \
+  --output-dir /results/warehouse_random_capture
+```
+
+What it does:
+
+- Opens `/Isaac/Samples/Replicator/Stage/full_warehouse_worker_and_anim_cameras.usd`
+- Randomly changes camera pose each iteration
+- Captures `rgb`, `distance_to_camera` (depth), and `semantic_segmentation`
+- Repeats for `--num-samples` captures (default: `100`)
+
+Outputs are written under `--output-dir`.
+
+## 6) Locate outputs
 
 After training, logs and videos are under the output directory printed by
 `enter_isaaclab_container.sh` (the `output dir:` line):
