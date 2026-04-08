@@ -2,8 +2,6 @@
 
 ## Step 1: Set up the Slack Webhook (One-time setup)
 
-You need a URL that acts as a mailbox for your messages.
-
 1. Open **[Slack API: Your Apps](https://api.slack.com/apps)** and sign in.
 2. Click **Create New App** → **From scratch**.
 3. Enter an app name (e.g. **Job Notifier**), pick the **workspace**, then create the app.
