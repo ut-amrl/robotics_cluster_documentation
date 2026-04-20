@@ -20,3 +20,18 @@
 export SLACK_HOOK_URI='https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXX'
 ./send_slack_message.sh "Hello, world!"
 ```
+
+## Step 3: Submit the Slurm demo job
+
+The demo script sends one Slack message as soon as the job starts, then keeps the allocation alive.
+
+```bash
+cd /path/to/slack_notifications
+export SLACK_HOOK_URI='https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXX'
+sbatch demo_slack_notify_job.slurm
+```
+
+Notes:
+- You will have to change the path to the `send_slack_message.sh` script in the SLURM script.
+- The script requests the `pvc` partition for 15 minutes --- you can change them to meet your needs.
+- `SLACK_HOOK_URI` should be exported in the same shell where you run `sbatch` so Slurm can pass it into the job environment.
