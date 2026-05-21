@@ -16,8 +16,8 @@ Texas Robotics contributed 8 nodes to Stampede3 and has priority access to them 
 | **CUDA** | 13.1 (via `module load nvidia`) |
 | **OS** | Rocky Linux 9.7, Kernel 5.14.0 |
 
-[GPU Product Brief](pdfs/NVIDIA_RTX_PRO_6000_Blackwell_Server_Edition_Product_Brief.pdf)
-[GPU Datasheet](pdfs/NVIDIA_RTX_PRO_6000_Blackwell_Server_Edition_Datasheet.pdf)
+[GPU Product Brief](datasheets/NVIDIA_RTX_PRO_6000_Blackwell_Server_Edition_Product_Brief.pdf)
+[GPU Datasheet](datasheets/NVIDIA_RTX_PRO_6000_Blackwell_Server_Edition_Datasheet.pdf)
 
 ## Other Stampede3 Queues
 
