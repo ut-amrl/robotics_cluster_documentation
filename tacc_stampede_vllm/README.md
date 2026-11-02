@@ -1,14 +1,16 @@
 # vLLM Serving Guide (Stampede3 / Micromamba)
 
-How to install [vLLM](https://docs.vllm.ai/) on Stampede3 `amd-rtx` nodes and serve large language models with single-GPU, data-parallel, and tensor-parallel configurations.
+How to install [vLLM](https://docs.vllm.ai/) on Stampede3 `rtx-small` and `amd-rtx` nodes and serve large language models with single-GPU, data-parallel, and tensor-parallel configurations.
 
 ## Quick Start
 
 ```bash
-sbatch serve_single_gpu.slurm      # 14B model on 1 GPU
-sbatch serve_data_parallel.slurm   # 14B model on 8 GPUs (data parallel)
-sbatch serve_tensor_parallel.slurm # 32B model on 2 GPUs (tensor parallel)
+sbatch -p rtx-small serve_single_gpu.slurm      # 14B model on 1 GPU
+sbatch -p amd-rtx serve_data_parallel.slurm     # 14B model on 8 GPUs (data parallel)
+sbatch -p rtx-small serve_tensor_parallel.slurm # 32B model on 2 GPUs (tensor parallel)
 ```
+
+The `-p` option chooses the queue: `rtx-small` for the one-GPU and two-GPU examples, and `amd-rtx` for the eight-GPU example.
 
 Each script creates the environment (if needed), installs vLLM, starts the server, sends a test request, and shuts down. Check the output file for results:
 
@@ -18,7 +20,16 @@ tail -f vllm_*.<job_id>.out
 
 ## Node Specs
 
-Each `amd-rtx` node has **8x NVIDIA RTX PRO 6000 Blackwell** GPUs with **96 GB VRAM each** (768 GB total GPU memory per node). This is enough to serve:
+Both queues use **NVIDIA RTX PRO 6000 Blackwell** GPUs with **96 GB VRAM each**:
+
+| Queue | GPUs per Node | Total GPU Memory per Node |
+|-------|--------------:|--------------------------:|
+| `rtx-small` | 2 | 192 GB |
+| `amd-rtx` | 8 | 768 GB |
+
+Use `amd-rtx` for configurations that need more than two GPUs on one node. See the [queue guide](../README.md#our-gpu-nodes-amd-rtx-and-rtx-small) for CPU and RAM details.
+
+Choose the model configuration according to the GPUs in your allocation:
 
 | Model Size | BF16 Memory | Fits on 1 GPU? | Recommended Config |
 |-----------|-------------|-----------------|-------------------|
@@ -27,6 +38,14 @@ Each `amd-rtx` node has **8x NVIDIA RTX PRO 6000 Blackwell** GPUs with **96 GB V
 | 32B | ~64 GB | Yes | `-tp 1` or `-tp 2` for lower latency |
 | 70B | ~140 GB | No | `-tp 2` (minimum) or `-tp 4` |
 | 70B+ MoE | varies | No | `-tp 4` or `-tp 8` |
+
+To try the examples interactively, first start a GPU session:
+
+```bash
+idev -p rtx-small -N 1 -n 1 -t 01:00:00  # single-GPU or two-GPU examples
+# For the eight-GPU example, use instead:
+# idev -p amd-rtx -N 1 -n 1 -t 01:00:00
+```
 
 ## Step 1: Create the Micromamba Environment
 
@@ -56,13 +75,10 @@ print(f'GPUs:    {torch.cuda.device_count()}x {torch.cuda.get_device_name(0)}')
 "
 ```
 
-Expected output:
+On `rtx-small`, the GPU line should show two cards:
 
 ```
-vLLM:    0.15.1
-PyTorch: 2.9.1+cu128
-CUDA:    True (12.8)
-GPUs:    8x NVIDIA RTX PRO 6000 Blackwell Server Edition
+GPUs:    2x NVIDIA RTX PRO 6000 Blackwell Server Edition
 ```
 
 ## Step 3: Set HuggingFace Cache Directory
@@ -139,6 +155,8 @@ print(response.choices[0].message.content)
 
 ## Example 2: Serve a 14B Model on 8 GPUs (Data Parallel)
 
+Run this example on a full `amd-rtx` node.
+
 Data parallelism runs **multiple replicas** of the same model, each on its own GPU. vLLM automatically load-balances incoming requests across replicas. This is ideal for **maximizing throughput** when serving many concurrent users.
 
 ```bash
@@ -172,7 +190,7 @@ The 32B model in BF16 needs ~64 GB. With `-tp 2`, each GPU holds ~32 GB of weigh
 
 ### Scaling Up
 
-For larger models, increase the tensor parallel size:
+For larger models, increase the tensor parallel size. The following four-GPU and eight-GPU configurations require a full `amd-rtx` node:
 
 ```bash
 # 70B model across 4 GPUs (~140 GB in BF16)
@@ -187,9 +205,9 @@ vllm serve Qwen/Qwen2.5-32B-Instruct -tp 2 -dp 4
 For long-running inference servers, submit via `sbatch`. The included scripts handle environment setup, model serving, test queries, and cleanup. Use them as templates:
 
 ```bash
-sbatch serve_single_gpu.slurm       # Example 1
-sbatch serve_data_parallel.slurm    # Example 2
-sbatch serve_tensor_parallel.slurm  # Example 3
+sbatch -p rtx-small serve_single_gpu.slurm       # Example 1
+sbatch -p amd-rtx serve_data_parallel.slurm      # Example 2
+sbatch -p rtx-small serve_tensor_parallel.slurm  # Example 3
 ```
 
 ### Keeping the Server Running
@@ -206,7 +224,7 @@ Then from a login node, find your compute node and SSH to it:
 
 ```bash
 squeue -u $USER        # find the node name (NODELIST column)
-ssh <node-name>        # e.g., ssh c571-002
+ssh <node-name>        # e.g., ssh v572-211
 curl http://localhost:8000/v1/models
 ```
 

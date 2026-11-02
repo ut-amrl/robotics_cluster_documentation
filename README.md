@@ -2,22 +2,39 @@
 
 Notes and setup guides for [Texas Robotics](https://robotics.utexas.edu/) use of [TACC Stampede3](https://docs.tacc.utexas.edu/hpc/stampede3/).
 
-## Our Nodes: `amd-rtx` Queue
+## Our GPU Nodes: `amd-rtx` and `rtx-small`
 
-Texas Robotics contributed 8 nodes to Stampede3 and has priority access to them via the `amd-rtx` queue.
+Use **`rtx-small`** for development and jobs that need one or two GPUs. Use **`amd-rtx`** when your job needs more GPUs, CPU cores, or RAM on one node.
+
+Each job runs on a node with the following resources:
+
+| Queue | Nodes | GPUs per Node | CPU Cores per Node | RAM per Node |
+|-------|------:|--------------:|-------------------:|-------------:|
+| `rtx-small` | 16 | 2 | 28 | ~360 GiB |
+| `amd-rtx` | 4 | 8 | 128 | ~1.4 TiB |
+
+Your job has the node's GPUs, CPU cores, and RAM to itself.
+
+Texas Robotics contributed eight physical servers. Four are available as full nodes in `amd-rtx`. The other four are divided into 16 smaller nodes in `rtx-small`, each with two GPUs. These smaller nodes are called *virtual nodes* and act as separate machines for running jobs.
+
+<details>
+<summary>Hardware and software details</summary>
+
+Each physical server has the following hardware:
 
 | Spec | Value |
 |------|-------|
-| **Nodes** | 8 |
-| **CPU** | 2x AMD EPYC 9555 64-Core (128 cores per node) |
-| **RAM** | ~1.5 TB per node |
-| **GPUs** | 8x NVIDIA RTX PRO 6000 Blackwell Server Edition per node |
+| **CPU** | 2x AMD EPYC 9555 64-Core (128 cores per physical server) |
+| **RAM** | ~1.5 TB per physical server |
+| **GPUs** | 8x NVIDIA RTX PRO 6000 Blackwell Server Edition per physical server (64 GPUs total) |
 | **GPU Driver** | 590.48.01 |
 | **CUDA** | 13.1 (via `module load nvidia`) |
 | **OS** | Rocky Linux 9.7, Kernel 5.14.0 |
 
 [GPU Product Brief](datasheets/RTX-PRO-6000-Server-Product-Brief.pdf)
 [GPU Datasheet](datasheets/nvidia-rtx-pro-6000-blackwell-server-edition-datasheet.pdf)
+
+</details>
 
 ## Other Stampede3 Queues
 
@@ -31,10 +48,11 @@ Texas Robotics allocations also have access to the rest of Stampede3. See the [f
 | `spr` | 616 | 112 | 128 GB HBM | -- | Sapphire Rapids HBM nodes |
 | `nvdimm` | 3 | 80 | 4 TB | -- | Large-memory Ice Lake nodes |
 | `h100` | 24 | 96 | 1 TB | 4x NVIDIA H100 | GPU nodes |
-| `pvc` | 20 | 96 | 1 TB | 4x Intel PVC | GPU nodes |
-| **`amd-rtx`** | **8** | **128** | **~1.5 TB** | **8x RTX PRO 6000** | **TR priority** |
+| `pvc` | 18 | 96 | 1 TB | 4x Intel PVC | GPU nodes |
 
 ## Software Status (`amd-rtx`)
+
+The software below has been tested on `amd-rtx`.
 
 | Component | Status | Notes |
 |-----------|--------|-------|
@@ -55,42 +73,64 @@ ssh <username>@stampede3.tacc.utexas.edu
 
 ## Interactive Development Sessions
 
-The `idev` command is the easiest way to get an interactive shell on a compute node:
+The `idev` command is the easiest way to get an interactive shell on a compute node. Use `rtx-small` for development and jobs using one or two GPUs:
 
 ```bash
-idev -p amd-rtx                      # default time (usually 30 min)
-idev -p amd-rtx -t 2:30:00           # 2.5 hours
+idev -p rtx-small -N 1 -n 1 -t 00:30:00  # 28 CPU cores, 2 GPUs
+idev -p rtx-small -N 1 -n 1 -t 02:30:00  # 2.5 hours
 ```
+
+For a full eight-GPU node:
+
+```bash
+idev -p amd-rtx -N 1 -n 1 -t 00:30:00    # 128 CPU cores, 8 GPUs
+```
+
+Here, `-p` chooses the queue and `-t` sets the requested run time in hours:minutes:seconds. The examples request one node (`-N 1`) and one task (`-n 1`).
 
 Once allocated, you can see your assigned node and SSH directly to it:
 
 ```bash
 squeue -u $USER                      # find the node name (NODELIST column)
-ssh <node-name>                       # e.g. ssh c571-002
+ssh <node-name>                       # e.g. ssh v572-211
 ```
 
 This is useful when you need multiple terminals on the same compute node.
+
+Run `nvidia-smi -L` in your session to list its GPUs.
 
 ## Checking Node Availability
 
 From the [TACC docs on monitoring with sinfo](https://docs.tacc.utexas.edu/hpc/stampede3/#jobs-monitoring-sinfo), this command gives a compact overview of all queues:
 
 ```bash
-$ sinfo -S+P -o "%18P %8a %20F"
-PARTITION          AVAIL    NODES(A/I/O/T)
-amd-rtx            up       1/7/0/8
-h100               up       14/4/6/24
-icx                up       206/8/10/224
-nvdimm             up       2/1/0/3
-pvc                up       6/10/4/20
-skx                up       1091/5/64/1160
-skx-dev*           up       10/35/27/72
-spr                up       255/237/124/616
+sinfo -S+P -o "%18P %8a %20F"
 ```
 
-The `NODES(A/I/O/T)` column shows **A**llocated / **I**dle / **O**ther (down, drained, etc.) / **T**otal. In the example above, the `amd-rtx` queue has 1 node in use, 7 idle, and 8 total.
+Example output:
 
-For per-node detail on our queue, use `sinfo -Nel -p amd-rtx`.
+```text
+PARTITION          AVAIL    NODES(A/I/O/T)
+amd-rtx            up       3/0/1/4
+h100               up       23/0/1/24
+icx                up       220/2/2/224
+nvdimm             up       3/0/0/3
+pvc                up       6/12/0/18
+rtx-small          up       10/3/3/16
+skx                up       945/209/6/1160
+skx-dev*           up       68/2/2/72
+spr                up       561/9/46/616
+```
+
+The four numbers under `NODES(A/I/O/T)` mean **in use / idle / unavailable / total**. Unavailable nodes may be down or temporarily taken out of service.
+
+For example, `10/3/3/16` means `rtx-small` has 10 nodes in use, 3 idle, and 3 unavailable, out of 16 total.
+
+To see the status of individual GPU nodes:
+
+```bash
+sinfo -Nel -p amd-rtx,rtx-small
+```
 
 ## Common SLURM Commands
 
@@ -101,6 +141,16 @@ scancel <job_id>                      # cancel a job
 ```
 
 See the [TACC job submission docs](https://docs.tacc.utexas.edu/hpc/stampede3/#running) for full details.
+
+For a batch job using one or two GPUs, put these lines near the top of your job script:
+
+```bash
+#SBATCH -p rtx-small
+#SBATCH -N 1
+#SBATCH -n 1
+```
+
+Change `rtx-small` to `amd-rtx` to request a full eight-GPU node.
 
 ## Module System
 

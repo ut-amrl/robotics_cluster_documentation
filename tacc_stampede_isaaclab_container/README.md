@@ -1,11 +1,13 @@
 # Isaac Lab NGC Container on Stampede3 (Apptainer)
 
-Run NVIDIA Isaac Lab container `nvcr.io/nvidia/isaac-lab:2.3.2` on Stampede3 `amd-rtx` with Apptainer.
+Run NVIDIA Isaac Lab container `nvcr.io/nvidia/isaac-lab:2.3.2` on Stampede3 `rtx-small` or `amd-rtx` with Apptainer.
+
+These examples use `rtx-small`, which provides two GPUs per node. For jobs that need more GPUs, CPU cores, or RAM, use `amd-rtx`. See the [queue guide](../README.md#our-gpu-nodes-amd-rtx-and-rtx-small) for details.
 
 ## 1) Start an interactive GPU node
 
 ```bash
-idev -p amd-rtx -N 1 -n 1 -t 02:00:00
+idev -p rtx-small -N 1 -n 1 -t 02:00:00
 ```
 
 ## 2) Pull image once
@@ -138,7 +140,7 @@ headless reinforcement learning training for the Isaac Lab Ant locomotion task
 Submit with:
 
 ```bash
-sbatch run_isaaclab_container_train_video.slurm
+sbatch -p rtx-small run_isaaclab_container_train_video.slurm
 ```
 
 By default, each job writes results to:

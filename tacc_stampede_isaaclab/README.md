@@ -5,14 +5,18 @@ Instructions for installing [IsaacLab v2.1.0](https://isaac-sim.github.io/IsaacL
 **Automated install:** You can skip the manual steps entirely by submitting the provided sbatch script:
 
 ```bash
-sbatch install_isaaclab.slurm
+sbatch -p rtx-small install_isaaclab.slurm
 ```
+
+This command runs the installation and training test on `rtx-small`, which provides two GPUs per node. See the [queue guide](../README.md#our-gpu-nodes-amd-rtx-and-rtx-small) for larger jobs.
 
 See [`install_isaaclab.slurm`](install_isaaclab.slurm) for the full script. It creates the environment, installs all dependencies, patches version pins, and runs a verification training loop — all in a single batch job.
 
 For more context on Isaac Lab's installation options, see the [official IsaacLab installation documentation](https://isaac-sim.github.io/IsaacLab/release/2.1.0/source/setup/installation/index.html).
 
 ## System Details
+
+These specifications describe the eight-GPU `amd-rtx` node used to test this guide. The `rtx-small` examples above use two GPUs per node.
 
 - **OS:** Rocky Linux 9.7 (Blue Onyx), Kernel 5.14.0
 - **CPU:** 2x AMD EPYC 9555 64-Core (128 cores total)
@@ -176,7 +180,7 @@ You may see: `Cuda failure: 'peer access is already enabled'`. This is a harmles
 Instead of running the steps above manually, submit the provided SLURM batch script which performs the entire installation end-to-end on a GPU node:
 
 ```bash
-sbatch install_isaaclab.slurm
+sbatch -p rtx-small install_isaaclab.slurm
 ```
 
 The script ([`install_isaaclab.slurm`](install_isaaclab.slurm)) performs all 9 steps above, including environment creation, patching, and a verification training run. Monitor progress with:

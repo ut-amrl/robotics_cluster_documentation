@@ -1,13 +1,13 @@
 # PyTorch GPU Environment Guide (Stampede3 / Micromamba)
 
-How to set up a micromamba + PyTorch GPU environment on the Stampede3 `amd-rtx` nodes, verify GPU access interactively, and run a training job via `sbatch`.
+Set up PyTorch on Stampede3, check that it can use the GPUs, and run a training job. These examples use the two-GPU `rtx-small` queue. For larger jobs, see the [queue guide](../README.md#our-gpu-nodes-amd-rtx-and-rtx-small).
 
 ## Quick Start
 
 If you just want to run the included CIFAR-10 training example end-to-end:
 
 ```bash
-sbatch train_cifar10.slurm
+sbatch -p rtx-small train_cifar10.slurm
 ```
 
 This creates the environment, installs PyTorch, and trains a ResNet-18 on CIFAR-10 for 5 epochs. Monitor with:
@@ -18,7 +18,7 @@ tail -f pytorch_cifar10.<job_id>.out
 
 ## Why PyTorch Nightly?
 
-The `amd-rtx` nodes have **NVIDIA RTX PRO 6000 Blackwell** GPUs (96 GB VRAM each). These require PyTorch built with CUDA 12.8+ support. As of early 2025, the stable PyTorch release does not yet include Blackwell support — you must use either a **nightly** build or a stable release >= 2.9.
+Both queues have **NVIDIA RTX PRO 6000 Blackwell** GPUs (96 GB VRAM each). These require PyTorch built with CUDA 12.8+ support. As of early 2025, the stable PyTorch release does not yet include Blackwell support — you must use either a **nightly** build or a stable release >= 2.9.
 
 ## Step 1: Create the Micromamba Environment
 
@@ -46,10 +46,10 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 
 ## Step 3: Verify GPU Access (Interactive)
 
-Start an interactive session on an `amd-rtx` node:
+Start an interactive session on a two-GPU `rtx-small` node:
 
 ```bash
-idev -p amd-rtx -t 0:30:00
+idev -p rtx-small -N 1 -n 1 -t 0:30:00
 ```
 
 Once allocated, activate the environment and test:
@@ -71,18 +71,11 @@ print(f'Tensor on GPU: {x.device}, sum = {x.sum().item():.4f}')
 "
 ```
 
-Expected output:
+On `rtx-small`, check for these lines in the output:
 
 ```
-PyTorch 2.11.0.dev20260211+cu128
 CUDA available: True
-CUDA version:   12.8
-GPU count:      8
-  GPU 0: NVIDIA RTX PRO 6000 Blackwell Server Edition (102 GB)
-  GPU 1: NVIDIA RTX PRO 6000 Blackwell Server Edition (102 GB)
-  ...
-  GPU 7: NVIDIA RTX PRO 6000 Blackwell Server Edition (102 GB)
-Tensor on GPU: cuda:0, sum = -392.0160
+GPU count:      2
 ```
 
 ### Quick Matmul Benchmark
@@ -102,14 +95,14 @@ print(f'FP32 matmul: {tflops:.1f} TFLOPS')
 "
 ```
 
-We measured **~54 TFLOPS** FP32 on these nodes.
+We measured **~54 TFLOPS** FP32 on an `amd-rtx` node.
 
 ## Step 4: Run a Training Job via sbatch
 
 The included [`train_cifar10.py`](train_cifar10.py) trains a ResNet-18 on CIFAR-10 with mixed-precision (AMP), cosine LR scheduling, and model checkpointing. Submit it with the provided SLURM script:
 
 ```bash
-sbatch train_cifar10.slurm
+sbatch -p rtx-small train_cifar10.slurm
 ```
 
 Or run it interactively:
@@ -159,13 +152,17 @@ pip install wandb                               # Experiment tracking
 
 ### Multi-GPU Training
 
-For multi-GPU training with `torchrun` (DistributedDataParallel):
+For training on multiple GPUs with `torchrun`, start one process per GPU:
 
 ```bash
+# On rtx-small (2 GPUs)
+torchrun --nproc_per_node=2 your_training_script.py
+
+# On amd-rtx (8 GPUs)
 torchrun --nproc_per_node=8 your_training_script.py
 ```
 
-In an sbatch script, set `--nproc_per_node` to the number of GPUs you want. Each `amd-rtx` node has 8 GPUs.
+Use these commands within a job on the matching queue. Set `--nproc_per_node` to the number of GPUs your training script will use on that node.
 
 ### Checkpointing to $SCRATCH
 
